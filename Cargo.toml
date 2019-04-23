@@ -1,0 +1,9 @@
+[package]
+name = "power-law"
+version = "0.1.0"
+authors = ["ty"]
+edition = "2018"
+
+[dependencies]
+zipf = "~5.0.1"
+rand = "*"
