@@ -4,3 +4,7 @@
 *.in
 *.txt
 *.swp
+cc/power-law
+*.o
+cpu-usage
+two-2MiKeys
