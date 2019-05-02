@@ -2,7 +2,7 @@ CC=g++
 CXXFLAGS=-std=c++11 -c $(INCLUDE_DIRS)
 INCLUDE_DIRS=-I../rocksdb-5.18.3/include
 LDFLAGS=-L../rocksdb-5.18.3 -lrocksdb -lrt -lz -lbz2 -lpthread
-SOURCES=power-law.cc
+SOURCES=cc/power-law.cc
 OBJECTS=$(SOURCES:.cc=.o)
 EXECUTABLE=power-law
 
