@@ -1,16 +1,21 @@
 #include "rocksdb/db.h"
 #include <cassert>
-#include <iostream>
 #include <cstdlib>
 #include <climits>
+#include <iostream>
 #include <string>
-#include "random.h"
+#include <vector>
+#include <memory>
+
+#include "rpc/server.h"
 
 using namespace rocksdb;
+using namespace std;
+
+// global variables ...
+DB * db;
 
 // constants
-#define rand_min 1
-#define rand_max (1024 << 10 - 1) // 2^20
 #define value_size (1024 * 4) // 4KB
 
 inline Slice* BigSlice(size_t size) {
@@ -31,36 +36,17 @@ inline void IntToSlice (Slice& s, char* buf, uint64_t input) {
   s = Slice(buf, sizeof(input));
 }
 
-int main(int argc, char* argv[]){
-    //assert(argc == 2);
-    //std::string index(argv[1]);
-    std::string db_name = "/disk/scratch1/ty/testdb"/* + index*/;
-    //open a DB
-    DB * db;
-    Options options;
-    DestroyDB(db_name, options);
-    options.create_if_missing = true;
-    options.error_if_exists = true;
-    options.write_buffer_size = 4 << 20; // use 4MB memtable to force compaction
-    options.statistics = CreateDBStatistics();
-    Status status = DB::Open(options, db_name, &db);
-    assert(status.ok());
-
-    uint64_t key;
+void put(uint64_t key) {
     Slice key_slice;
     char * buf = new char[8];
-    rocksdb::WriteOptions wo;
-    std::string line;
+    IntToSlice(key_slice, buf, stol(key));
+    WriteOptions wo;
+    //ignore the returned status
+    db->Put(wo, key_slice, *BigSlice(value_size));
+}
 
-    while (std::getline(std::cin, line)) {
-        key = (uint64_t)std::stol(line);
-        IntToSlice(key_slice, buf, key);
-        status = db->Put(wo, key_slice, *BigSlice(value_size));
-    }
-
-    //report
+void report_dbstats() {
     std::string out;
-    std::cout << "Memtable Size: " << (options.write_buffer_size >> 20) << " MB" << std::endl;
     db->GetProperty("rocksdb.num-immutable-mem-table", &out);
     std::cout << "# immutable memtables not yet flushed: " << out << std::endl;
     //db->GetProperty("rocksdb.num-immutable-mem-table-flushed", &out);
@@ -72,7 +58,7 @@ int main(int argc, char* argv[]){
         db->GetProperty("rocksdb.num-running-flushes", &out);
         std::cout << "There are " + out + " pending memtable flushings" << std::endl;
     }
-    
+
     db->GetProperty("rocksdb.compaction-pending", &out);
     if (out == "0") {
         std::cout << "No pending compaction" << std::endl;
@@ -86,13 +72,35 @@ int main(int argc, char* argv[]){
     // Detailed statistics (see include/statistics.h)
     db->GetProperty("rocksdb.options-statistics", &out);
     std::cout << out << std::endl;
-    //std::cout << "Total Puts: " << putting_count << std::endl;
-    //std::cout << "Total failed Puts: " << putting_count_fail << std::endl;
-    //std::cout << "Total successful Puts: " << putting_count - putting_count_fail << std::endl;
-    //std::cout << "Total Puts in Bytes: " << (long)putting_count * value_size << std::endl;
-    
-    delete db;
-    DestroyDB("/disk/scratch1/ty/testdb", options);
+}
+
+int main(int argc, char* argv[]){
+    assert(argc == 2);
+
+    string db_name = "/disk/scratch1/ty/testdb" + string(argv[1]);
+    Options options;
+    DestroyDB(db_name, options);
+    options.create_if_missing = true;
+    options.error_if_exists = true;
+    options.write_buffer_size = 64 << 20;
+    options.statistics = CreateDBStatistics();
+    Status status = DB::Open(options, db_name, &db);
+    assert(status.ok());
+
+    int index = stoi(argv[1]);
+    rpc::server db_srv((uint16_t)(8080 + i));
+    db_srv.bind("put", put);
+    db_srv.bind("report_dbstats", report_dbstats);
+    db_srv.bind(
+        "stop_db_srv",
+        []() {
+            rpc::this_server().stop();
+            delete db;
+            DestroyDB(db_name, options);
+        }
+    );
+
+    db_srv.run();
 
     return 0;
 }
