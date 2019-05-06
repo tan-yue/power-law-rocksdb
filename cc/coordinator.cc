@@ -43,12 +43,15 @@ int main(int argc, char * argv[]) {
     assert(argc == 2);
 
     Coordinator coord(stoi(argv[1]));
+    cout << "Coordinator started." << endl;
 
     string key;
     while (getline(cin, key)) {
+        //cout << "Receive a Put to key " << key << endl;
         coord.put((uint64_t)stol(key));
     }
     coord.stop();
-    
+    cout << "Coordinator stopped." << endl;
+
     return 0;
 }

@@ -1,4 +1,3 @@
-#include "rocksdb/db.h"
 #include <cassert>
 #include <cstdlib>
 #include <climits>
@@ -7,7 +6,9 @@
 #include <vector>
 #include <memory>
 
+#include "rocksdb/db.h"
 #include "rpc/server.h"
+#include "rpc/this_server.h"
 
 using namespace rocksdb;
 using namespace std;
@@ -37,9 +38,10 @@ inline void IntToSlice (Slice& s, char* buf, uint64_t input) {
 }
 
 void put(uint64_t key) {
+    //cout << "Receive a Put to key " << to_string((long)key) << endl;
     Slice key_slice;
     char * buf = new char[8];
-    IntToSlice(key_slice, buf, stol(key));
+    IntToSlice(key_slice, buf, key);
     WriteOptions wo;
     //ignore the returned status
     db->Put(wo, key_slice, *BigSlice(value_size));
@@ -88,15 +90,16 @@ int main(int argc, char* argv[]){
     assert(status.ok());
 
     int index = stoi(argv[1]);
-    rpc::server db_srv((uint16_t)(8080 + i));
+    rpc::server db_srv((uint16_t)(8080 + index));
     db_srv.bind("put", put);
     db_srv.bind("report_dbstats", report_dbstats);
     db_srv.bind(
         "stop_db_srv",
-        []() {
+        [db_name, index]() {
             rpc::this_server().stop();
             delete db;
-            DestroyDB(db_name, options);
+            DestroyDB(db_name, Options());
+            cout << "Instance " << to_string(index) << " stopped." << endl;
         }
     );
 
