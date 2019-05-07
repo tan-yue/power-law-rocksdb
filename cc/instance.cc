@@ -5,10 +5,12 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <thread>
 
 #include "rocksdb/db.h"
 #include "rpc/server.h"
 #include "rpc/this_server.h"
+#include "topk.h"
 
 using namespace rocksdb;
 using namespace std;
@@ -38,13 +40,20 @@ inline void IntToSlice (Slice& s, char* buf, uint64_t input) {
 }
 
 void put(uint64_t key) {
-    //cout << "Receive a Put to key " << to_string((long)key) << endl;
+#ifdef DEBUG
+    cout << "Receive a Put to key " << to_string((long)key) << endl;
+#endif
     Slice key_slice;
     char * buf = new char[8];
     IntToSlice(key_slice, buf, key);
     WriteOptions wo;
     //ignore the returned status
     db->Put(wo, key_slice, *BigSlice(value_size));
+}
+
+TopK report_topk() {
+    //TODO: nothing yet
+    return TopK{0};
 }
 
 void report_dbstats() {
@@ -90,20 +99,34 @@ int main(int argc, char* argv[]){
     assert(status.ok());
 
     int index = stoi(argv[1]);
-    rpc::server db_srv((uint16_t)(8080 + index));
-    db_srv.bind("put", put);
-    db_srv.bind("report_dbstats", report_dbstats);
-    db_srv.bind(
-        "stop_db_srv",
+    thread db_th([index] () {
+        cout << "Starting db_srv" << endl;
+        rpc::server db_srv((uint16_t)(8080 + index));
+        db_srv.bind("put", put);
+        db_srv.bind("report_dbstats", report_dbstats);
+        //db_srv.bind("report_topk", report_topk);
+        db_srv.bind(
+            "stop_db_srv",
+            [index]() {
+                rpc::this_server().stop();
+                delete db;
+                cout << "db_srv: Instance " << to_string(index) << " stopped." << endl;
+            }
+        );
+        db_srv.run();
+    });
+
+    cout << "Starting pa_srv" << endl;
+    rpc::server pa_srv((uint16_t)(9080 + index));
+    pa_srv.bind("report_topk", report_topk);
+    pa_srv.bind(
+        "stop_pa_srv",
         [db_name, index]() {
             rpc::this_server().stop();
-            delete db;
-            DestroyDB(db_name, Options());
-            cout << "Instance " << to_string(index) << " stopped." << endl;
+            cout << "db_srv: Instance " << to_string(index) << " stopped." << endl;
         }
     );
-
-    db_srv.run();
+    pa_srv.run();
 
     return 0;
 }
