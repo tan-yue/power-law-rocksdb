@@ -3,3 +3,7 @@
 * A forked `rpclib` repo is contained as a git submodule, so when cloning this repo
   * either do `git clone --recursive git@github.com:tan-yue/power-law-rocksdb.git`
   * or `git clone` without `--recursive` and do `git submodule update --init` inside the cloned repo
+# TODO
+Implement the two functions below
+1. cc/coordinator.cc:Coordinator::lookup
+2. cc/partitioner.cc:Partitioner::repartition
