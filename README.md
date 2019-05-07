@@ -7,3 +7,8 @@
 Implement the two functions below
 1. cc/coordinator.cc:Coordinator::lookup
 2. cc/partitioner.cc:Partitioner::repartition
+# Build and Run
+* gen-zipf.sh: a script generating Zipfian stream to the standrad output
+* `make` compiles files in folder `cc` and puts executables in folder `build`
+* `make debug` does the same thing as `make` but turn on debug messages
+* For instructions of building rpclib, please refer to [rpclib's doc page](https://github.com/rpclib/rpclib/blob/master/doc/pages/compiling.md)
