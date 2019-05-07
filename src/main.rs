@@ -34,7 +34,6 @@ fn main() {
 			Arg::with_name("num-points")
 				.short("n")
 				.long("numpoints")
-				.value_name("NUMPOINTS")
 				.takes_value(true)
 				.required(true)
 				.help("Total number of points in the sample")
