@@ -2,6 +2,6 @@
 #include "rpc/server.h"
 
 struct TopK {
-    int count;
+    vector<uint64_t> data;
     MSGPACK_DEFINE_ARRAY(count);
 };

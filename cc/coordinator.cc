@@ -10,8 +10,9 @@ using namespace std;
 
 class Coordinator {
     vector<rpc::client *> clients;
+    uint64_t max_key;
 public:
-    Coordinator (int num) {
+    Coordinator (int num, int max_key_) : max_key(max_key_) {
         string localhost = "127.0.0.1";
         for (int i = 0; i < num; ++i) {
             clients.push_back(new rpc::client(localhost, (uint16_t)(8080 + i)));
@@ -38,7 +39,7 @@ public:
 };
 
 int Coordinator::lookup (uint64_t key) {
-    return 0;
+    return (int)(key % (uint64_t)clients.size());
 }
 
 void handle_repartition() {

@@ -6,6 +6,8 @@
 #include <vector>
 #include <memory>
 #include <thread>
+#include <sstream>
+#include <iomanip>
 
 #include "rocksdb/db.h"
 #include "rpc/server.h"
@@ -27,28 +29,15 @@ inline Slice* BigSlice(size_t size) {
   return new Slice(buf, size);
 }
 
-inline void IntToSlice (Slice& s, char* buf, uint64_t input) {
-  buf[7] =  input & 0xff;
-  buf[6] = (input >> 8) & 0xff;
-  buf[5] = (input >> 16) & 0xff;
-  buf[4] = (input >> 24) & 0xff;
-  buf[3] = (input >> 32) & 0xff;
-  buf[2] = (input >> 40) & 0xff;
-  buf[1] = (input >> 48) & 0xff;
-  buf[0] = (input >> 56) & 0xff;
-  s = Slice(buf, sizeof(input));
-}
-
 void put(uint64_t key) {
 #ifdef DEBUG
     cout << "Receive a Put to key " << to_string((long)key) << endl;
 #endif
-    Slice key_slice;
-    char * buf = new char[8];
-    IntToSlice(key_slice, buf, key);
+    ostringstream ss;
+    ss << setw(8) << setfill('0') << key;
     WriteOptions wo;
     //ignore the returned status
-    db->Put(wo, key_slice, *BigSlice(value_size));
+    db->Put(wo, ss.str(), *BigSlice(value_size));
 }
 
 TopK report_topk() {

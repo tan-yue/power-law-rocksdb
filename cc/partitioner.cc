@@ -45,7 +45,7 @@ public:
                 futures.push_back((*it)->async_call("report_topk"));
             }
             repartition(futures);
-            seconds_to_sleep -= 
+            seconds_to_sleep -=
                 chrono::duration_cast<chrono::seconds>(chrono::steady_clock::now() - start)
                 .count();
         }
@@ -56,17 +56,32 @@ private:
 };
 
 void Partitioner::repartition(vector<future<handle> > & futures) {
-    // TODO:first multi-way merge sort
-    // TODO:then make repartition decisions
     for (auto it = futures.begin(); it != futures.end(); ++it) {
 #ifdef DEBUG
         cout << "waiting..." << endl;
 #endif
         it->wait();
-        cout << it->get().as<TopK>().count << endl;
     }
-    // TODO:blocking or non-blocking?
-    coord_client->call("handle_repartition");
+
+    // merge sort
+    vector<uint64_t> merged;
+    vector<size_t> curs;
+    while(merged.size() < k * clients.size()) {
+        size_t max_i = 0;
+        uint64_t max_cnt = 0;
+        for (size_t i = 0; i < clients.size(); ++i) {
+            if (curs[i] < k && futures[i].get().as<TopK>()[curs[i]].second > max_cnt)
+                max_i = i;
+        }
+        merged.push_back({futures[max_i].get().as<TopK>()[curs[max_i]].first, max_i});
+        ++curs[max_i];
+    }
+
+    // TODO:make repartition decisions
+    ExceptionList exceptions;
+
+    // let's do not wait for response
+    coord_client->async_call("handle_repartition", exceptions);
 }
 
 int main(int argc, char * argv[]) {
