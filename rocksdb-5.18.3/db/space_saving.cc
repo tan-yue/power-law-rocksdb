@@ -24,7 +24,7 @@ void Parent::Add(Child* c) {
 
 Child::Child() : parent_(NULL), next_(NULL), element_(0) {}
 
-void Child::Detach(Parent** smallest, HashMap* map) {
+void Child::Detach(Parent** smallest, HashMapSS* map) {
   if (next_ == this) {
     if (parent_ == *smallest) {
       *smallest = parent_->right_;
@@ -55,7 +55,7 @@ void Child::Detach(Parent** smallest, HashMap* map) {
 }
 
 SpaceSaving::SpaceSaving(const unsigned long long& num_counters) {
-  map_ = new HashMap(num_counters, 0.75);
+  map_ = new HashMapSS(num_counters, 0.75);
   smallest_ = new Parent();
   largest_ = smallest_;
   for (unsigned long long i = 0; i < num_counters; ++i) {
@@ -63,7 +63,7 @@ SpaceSaving::SpaceSaving(const unsigned long long& num_counters) {
   }
 }
 
-SpaceSaving::SpaceSaving(HashMap* map) {
+SpaceSaving::SpaceSaving(HashMapSS* map) {
   map_ = map;
   smallest_ = new Parent();
   largest_ = smallest_;
@@ -128,7 +128,7 @@ void SpaceSaving::Process(const unsigned long long& element) {
   }
 }
 
-void SpaceSaving::ExtractTop(std::shared_ptr<Logger> info_log, const unsigned long long output_counters, HashMap* map) {
+void SpaceSaving::ExtractTop(std::shared_ptr<Logger> info_log, const unsigned long long output_counters, HashMapSS* map) {
   unsigned long long count = 0;
   while(true) {
     Child* c = largest_->child_;

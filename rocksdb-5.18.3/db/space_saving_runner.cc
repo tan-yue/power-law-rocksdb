@@ -51,7 +51,7 @@ int FirstPass(char* filename, Hasher* hasher, SpaceSaving* space_saving) {
 }
 
 int SecondPass(char* filename, Hasher* hasher, SpaceSaving* space_saving, const long long& output_counters) {
-  HashMap* map = new HashMap(output_counters, 0.75);
+  HashMapSS* map = new HashMapSS(output_counters, 0.75);
   space_saving->ExtractTop(output_counters, map);
   delete space_saving;
   space_saving = new SpaceSaving(map);

@@ -5,10 +5,10 @@ namespace rocksdb {
 
 class Child;
 
-class HashMap {
+class HashMapSS {
  public:
-  HashMap(const unsigned long long& buckets, const double& load_factor);
-  ~HashMap();
+  HashMapSS(const unsigned long long& buckets, const double& load_factor);
+  ~HashMapSS();
   void Insert(const unsigned long long& key, Child* value);
   void Remove(const unsigned long long& key);
   bool Find(const unsigned long long& key, unsigned long long* index);

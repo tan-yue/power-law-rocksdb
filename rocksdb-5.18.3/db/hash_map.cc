@@ -2,7 +2,7 @@
 
 namespace rocksdb {
 
-HashMap::HashMap(const unsigned long long& buckets, const double& load_factor) {
+HashMapSS::HashMapSS(const unsigned long long& buckets, const double& load_factor) {
   size_ = 10 + (buckets / load_factor);
   keys_ = new unsigned long long[size_];
   values_ = new Child*[size_];
@@ -12,12 +12,12 @@ HashMap::HashMap(const unsigned long long& buckets, const double& load_factor) {
   }
 }
 
-HashMap::~HashMap() {
+HashMapSS::~HashMapSS() {
   delete[] keys_;
   delete[] values_;
 }
 
-void HashMap::Insert(const unsigned long long& key, Child* value) {
+void HashMapSS::Insert(const unsigned long long& key, Child* value) {
   unsigned long long i = key % size_;
   while (keys_[i] != 0) {
     i = (i == size_ - 1) ? 0 : i + 1;
@@ -26,7 +26,7 @@ void HashMap::Insert(const unsigned long long& key, Child* value) {
   values_[i] = value;
 }
 
-void HashMap::Remove(const unsigned long long& key) {
+void HashMapSS::Remove(const unsigned long long& key) {
   unsigned long long i = key % size_;
   while (keys_[i] != key) {
     i = (i == size_ - 1) ? 0 : i + 1;
@@ -48,7 +48,7 @@ void HashMap::Remove(const unsigned long long& key) {
   }
 }
 
-bool HashMap::Find(const unsigned long long& key, unsigned long long* index) {
+bool HashMapSS::Find(const unsigned long long& key, unsigned long long* index) {
   unsigned long long i = key % size_;
   while (true) {
     if (!keys_[i]) {
