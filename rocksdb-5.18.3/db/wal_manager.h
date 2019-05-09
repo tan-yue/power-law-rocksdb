@@ -42,8 +42,8 @@ class WalManager {
         seq_per_batch_(seq_per_batch)
 		{
 		  context_size_ = 1;
-		  internal_counters_ = 5;
-		  output_counters_ = 3;
+		  internal_counters_ = 1000;
+		  output_counters_ = 500;
 		  hasher_ = new Hasher(context_size_);
 		  space_saving_ = new SpaceSaving(internal_counters_);
 		}
