@@ -1,7 +1,18 @@
 #pragma once
+
+#include <vector>
+#include <utility>
+
 #include "rpc/server.h"
 
+using namespace std;
+
 struct TopK {
-    vector<uint64_t> data;
-    MSGPACK_DEFINE_ARRAY(count);
+    vector<pair<unsigned long long, unsigned long long> > data;
+    MSGPACK_DEFINE_ARRAY(data);
+};
+
+struct ExceptionList {
+    int placeholder;
+    MSGPACK_DEFINE_ARRAY(placeholder);
 };

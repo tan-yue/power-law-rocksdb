@@ -1,7 +1,7 @@
 #ifndef SPACE_SAVING_H
 #define SPACE_SAVING_H
 
-#include "db/hash_map.h"
+#include "rocksdb/hash_map.h"
 
 namespace rocksdb {
 

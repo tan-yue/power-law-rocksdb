@@ -5,6 +5,7 @@
 
 #include "rpc/client.h"
 #include "rpc/server.h"
+#include "topk.h"
 
 using namespace std;
 
@@ -42,7 +43,7 @@ int Coordinator::lookup (uint64_t key) {
     return (int)(key % (uint64_t)clients.size());
 }
 
-void handle_repartition() {
+void handle_repartition(ExceptionList exceptions) {
     //TODO
     //test only
     cout << "Hello from handle_repartition" << endl;
@@ -51,7 +52,7 @@ void handle_repartition() {
 int main(int argc, char * argv[]) {
     assert(argc == 2);
 
-    Coordinator coord(stoi(argv[1]));
+    Coordinator coord(stoi(argv[1]), 4<<20); // key space is 4 million
     cout << "Coordinator started." << endl;
 
     thread puts([&coord]() {

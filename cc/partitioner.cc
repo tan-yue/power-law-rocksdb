@@ -14,8 +14,9 @@ typedef RPCLIB_MSGPACK::object_handle handle;
 class Partitioner {
     vector<rpc::client *> clients;
     rpc::client * coord_client;
+    int k;
 public:
-    Partitioner(int num) {
+    Partitioner(int num) : k(500) {
         string localhost = "127.0.0.1";
         for (int i = 0; i < num; ++i) {
             clients.push_back(new rpc::client(localhost, (uint16_t)(9080 + i)));
@@ -42,7 +43,7 @@ public:
             vector<future<handle> > futures;
             futures.reserve(clients.size());
             for (auto it = clients.begin(); it != clients.end(); ++it) {
-                futures.push_back((*it)->async_call("report_topk"));
+                futures.push_back((*it)->async_call("report_topk", k));
             }
             repartition(futures);
             seconds_to_sleep -=
@@ -64,21 +65,21 @@ void Partitioner::repartition(vector<future<handle> > & futures) {
     }
 
     // merge sort
-    vector<uint64_t> merged;
+    vector<pair<uint64_t, int> > merged;
     vector<size_t> curs;
     while(merged.size() < k * clients.size()) {
         size_t max_i = 0;
-        uint64_t max_cnt = 0;
+        unsigned long long max_cnt = 0;
         for (size_t i = 0; i < clients.size(); ++i) {
-            if (curs[i] < k && futures[i].get().as<TopK>()[curs[i]].second > max_cnt)
+            if (curs[i] < k && futures[i].get().as<TopK>().data[curs[i]].second > max_cnt)
                 max_i = i;
         }
-        merged.push_back({futures[max_i].get().as<TopK>()[curs[max_i]].first, max_i});
+        merged.push_back({(uint64_t)futures[max_i].get().as<TopK>().data[curs[max_i]].first, (int)max_i});
         ++curs[max_i];
     }
 
     // TODO:make repartition decisions
-    ExceptionList exceptions;
+    ExceptionList exceptions{0};
 
     // let's do not wait for response
     coord_client->async_call("handle_repartition", exceptions);

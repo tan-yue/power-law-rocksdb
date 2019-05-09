@@ -40,9 +40,8 @@ void put(uint64_t key) {
     db->Put(wo, ss.str(), *BigSlice(value_size));
 }
 
-TopK report_topk() {
-    //TODO: nothing yet
-    return TopK{0};
+TopK report_topk(const unsigned long long k) {
+    return {db->ReportTopk(k)};
 }
 
 void report_dbstats() {

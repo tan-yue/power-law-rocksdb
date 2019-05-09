@@ -1,7 +1,7 @@
 CC=g++
 CXXFLAGS=-std=c++11 -c $(INCLUDE_DIRS)
-INCLUDE_DIRS=-I../rocksdb-5.18.3/include -Irpclib/include
-LDFLAGS=-L../rocksdb-5.18.3 -lrocksdb -lrt -lz -lbz2
+INCLUDE_DIRS=-Irocksdb-5.18.3/include -Irpclib/include
+LDFLAGS=-Lrocksdb-5.18.3 -lrocksdb -lrt -lz -lbz2
 RPC_LDFLAGS=-Lrpclib/build -lrpc -lpthread
 SOURCES=cc/instance.cc cc/coordinator.cc cc/partitioner.cc
 OBJECTS=$(SOURCES:.cc=.o)

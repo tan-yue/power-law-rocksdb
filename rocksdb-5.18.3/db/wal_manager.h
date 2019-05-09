@@ -34,18 +34,18 @@ namespace rocksdb {
 class WalManager {
  public:
   WalManager(const ImmutableDBOptions& db_options,
-             const EnvOptions& env_options, const bool seq_per_batch = false, SpaceSaving *space_saving)
+             const EnvOptions& env_options, const bool seq_per_batch = false, SpaceSaving *space_saving = nullptr)
       : db_options_(db_options),
         env_options_(env_options),
         env_(db_options.env),
         purge_wal_files_last_run_(0),
-        seq_per_batch_(seq_per_batch)
+        seq_per_batch_(seq_per_batch),
+        space_saving_(space_saving)
 		{
 		  context_size_ = 1;
 		  internal_counters_ = 1000;
 		  output_counters_ = 500;
 		  hasher_ = new Hasher(context_size_);
-		  space_saving_ = space_saving;
 		}
 
   Status genTopkForPartitioner(uint64_t log);
@@ -112,7 +112,7 @@ class WalManager {
   long long internal_counters_;
   long long output_counters_;
   Hasher* hasher_;
-  //SpaceSaving* space_saving_;
+  SpaceSaving* space_saving_;
 };
 
 #endif  // ROCKSDB_LITE
