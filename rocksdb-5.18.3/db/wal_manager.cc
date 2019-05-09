@@ -42,7 +42,6 @@
 #include "db/hasher.cc"
 #include "db/hash_map.h"
 #include "db/hash_map.cc"
-#include "db/space_saving.h"
 #include "db/space_saving.cc"
 
 namespace rocksdb {
@@ -50,10 +49,6 @@ namespace rocksdb {
 #ifndef ROCKSDB_LITE
 
 static uint64_t total_records = 0;
-
-std::vector<std::pair<uint64, uint64>>& report_topk(){
-  return space_saving_->ExtractTop(output_counters_);
-}
 
 Status WalManager::genTopkForPartitioner(uint64_t log) {
 	ROCKS_LOG_WARN(db_options_.info_log, "Inside topk using db_options_.info_log");

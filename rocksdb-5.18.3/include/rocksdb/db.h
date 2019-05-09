@@ -15,6 +15,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <utility>
 #include "rocksdb/iterator.h"
 #include "rocksdb/listener.h"
 #include "rocksdb/metadata.h"
@@ -25,6 +26,7 @@
 #include "rocksdb/transaction_log.h"
 #include "rocksdb/types.h"
 #include "rocksdb/version.h"
+#include "rocksdb/space_saving.h"
 
 #ifdef _WIN32
 // Windows API macro interference
@@ -55,6 +57,8 @@ class EventListener;
 class TraceWriter;
 
 using std::unique_ptr;
+
+SpaceSaving * space_saving_;
 
 extern const std::string kDefaultColumnFamilyName;
 struct ColumnFamilyDescriptor {
@@ -248,7 +252,9 @@ class DB {
     return Put(options, DefaultColumnFamily(), key, value);
   }
 
-  virtual std::vector<std::pair<unsigned long long, unsigned long long>>& report_topk();
+  virtual std::vector<std::pair<unsigned long long, unsigned long long>> ReportTopk(const unsigned long long k) {
+      return space_saving_->ExtractTopVector(k);
+  }
 
   // Remove the database entry (if any) for "key".  Returns OK on
   // success, and a non-OK status on error.  It is not an error if "key"

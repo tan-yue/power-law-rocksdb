@@ -1,6 +1,6 @@
 #include <cstddef>
 #include <iostream>
-#include "db/space_saving.h"
+#include "rocksdb/space_saving.h"
 
 #include "util/logging.h"
 #include "rpc/client.h"
@@ -148,9 +148,9 @@ void SpaceSaving::ExtractTop(std::shared_ptr<Logger> info_log, const unsigned lo
   }
 }
 
-std::vector<std::pair<uint64_t, uint64_t>>& SpaceSaving::ExtractTopVector(const unsigned long long output_counters) {
+std::vector<std::pair<unsigned long long, unsigned long long>> SpaceSaving::ExtractTopVector(const unsigned long long output_counters) {
   unsigned long long count = 0;
-  std::vector<std::pair<uint64_t,uint64_t>> topk_vector;
+  std::vector<std::pair<unsigned long long, unsigned long long>> topk_vector;
   while(true) {
     Child* c = largest_->child_;
     do {

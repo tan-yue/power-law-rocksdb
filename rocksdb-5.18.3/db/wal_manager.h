@@ -26,7 +26,7 @@
 #include "rocksdb/types.h"
 
 #include "db/hasher.h"
-#include "db/space_saving.h"
+#include "rocksdb/space_saving.h"
 
 namespace rocksdb {
 
@@ -112,7 +112,7 @@ class WalManager {
   long long internal_counters_;
   long long output_counters_;
   Hasher* hasher_;
-  SpaceSaving* space_saving_;
+  //SpaceSaving* space_saving_;
 };
 
 #endif  // ROCKSDB_LITE
