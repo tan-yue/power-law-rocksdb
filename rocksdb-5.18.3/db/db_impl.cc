@@ -189,7 +189,7 @@ DBImpl::DBImpl(const DBOptions& options, const std::string& dbname,
           env_options_, immutable_db_options_)),
       num_running_ingest_file_(0),
 #ifndef ROCKSDB_LITE
-      wal_manager_(immutable_db_options_, env_options_, seq_per_batch),
+      wal_manager_(immutable_db_options_, env_options_, seq_per_batch, space_saving_),
 #endif  // ROCKSDB_LITE
       event_logger_(immutable_db_options_.info_log.get()),
       bg_work_paused_(0),

@@ -58,8 +58,6 @@ class TraceWriter;
 
 using std::unique_ptr;
 
-SpaceSaving * space_saving_;
-
 extern const std::string kDefaultColumnFamilyName;
 struct ColumnFamilyDescriptor {
   std::string name;
@@ -122,6 +120,7 @@ typedef std::unordered_map<std::string, std::shared_ptr<const TableProperties>>
 // any external synchronization.
 class DB {
  public:
+  SpaceSaving *space_saving_;
   // Open the database with the specified "name".
   // Stores a pointer to a heap-allocated database in *dbptr and returns
   // OK on success.
