@@ -33,7 +33,9 @@ class SpaceSaving {
   ~SpaceSaving();
   void Process(const unsigned long long& element);
   void Increment(Child* bucket);
-  void ExtractTop(std::shared_ptr<Logger> info_log, const unsigned long long output_counters, HashMap* map);
+  //void ExtractTop(std::shared_ptr<Logger> info_log, const unsigned long long output_counters, HashMap* map);
+  void ExtractTop(std::shared_ptr<Logger> info_log, const unsigned long long output_counters);
+  std::vector& SpaceSaving::ExtractTopVector(const unsigned long long output_counters) {
   void Print(char** ngrams);
   HashMap* map_;
   Parent* smallest_;

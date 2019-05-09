@@ -25,6 +25,9 @@
 #include "rocksdb/transaction_log.h"
 #include "rocksdb/types.h"
 
+#include "db/hasher.h"
+#include "db/space_saving.h"
+
 namespace rocksdb {
 
 #ifndef ROCKSDB_LITE
@@ -36,7 +39,14 @@ class WalManager {
         env_options_(env_options),
         env_(db_options.env),
         purge_wal_files_last_run_(0),
-        seq_per_batch_(seq_per_batch) {}
+        seq_per_batch_(seq_per_batch)
+		{
+		  context_size_ = 1;
+		  internal_counters_ = 5;
+		  output_counters_ = 3;
+		  hasher_ = new Hasher(context_size_);
+		  space_saving_ = new SpaceSaving(internal_counters_);
+		}
 
   Status genTopkForPartitioner(uint64_t log);
 
@@ -96,6 +106,13 @@ class WalManager {
   // obsolete files will be deleted every this seconds if ttl deletion is
   // enabled and archive size_limit is disabled.
   static const uint64_t kDefaultIntervalToDeleteObsoleteWAL = 600;
+
+  // Space saving state
+  long long context_size_;
+  long long internal_counters_;
+  long long output_counters_;
+  Hasher* hasher_;
+  SpaceSaving* space_saving_;
 };
 
 #endif  // ROCKSDB_LITE

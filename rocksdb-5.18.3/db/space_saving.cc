@@ -3,6 +3,8 @@
 #include "db/space_saving.h"
 
 #include "util/logging.h"
+#include "rpc/client.h"
+#include "rpc/server.h"
 
 namespace rocksdb{
 
@@ -144,6 +146,26 @@ void SpaceSaving::ExtractTop(std::shared_ptr<Logger> info_log, const unsigned lo
     largest_ = largest_->left_;
     if (largest_->value_ == 0) break;
   }
+}
+
+std::vector<std::pair<uint64_t, uint64_t>>& SpaceSaving::ExtractTopVector(const unsigned long long output_counters) {
+  unsigned long long count = 0;
+  std::vector<std::pair<uint64_t,uint64_t>> topk_vector;
+  while(true) {
+    Child* c = largest_->child_;
+    do {
+      Child* c2 = new Child();
+      c2->element_ = c->element_;
+      topk_vector.push_back({c->element_, largest_->value_});
+      ++count;
+      if (count == output_counters) break;
+      c = c->next_;
+    } while (c != largest_->child_);
+    if (count == output_counters) break;
+    largest_ = largest_->left_;
+    if (largest_->value_ == 0) break;
+  }
+  return topk_vector;
 }
 
 void SpaceSaving::Print(char** ngrams) {

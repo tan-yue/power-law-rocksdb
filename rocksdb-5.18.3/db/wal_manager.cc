@@ -51,6 +51,10 @@ namespace rocksdb {
 
 static uint64_t total_records = 0;
 
+std::vector<std::pair<uint64, uint64>>& report_topk(){
+  return space_saving_->ExtractTop(output_counters_);
+}
+
 Status WalManager::genTopkForPartitioner(uint64_t log) {
 	ROCKS_LOG_WARN(db_options_.info_log, "Inside topk using db_options_.info_log");
     struct LogReporter : public log::Reader::Reporter {
@@ -84,11 +88,11 @@ Status WalManager::genTopkForPartitioner(uint64_t log) {
     log::Reader reader(db_options_.info_log, std::move(lfile_reader), &reporter, true /*enable checksum*/, log, false /* retry_after_eof */);
    
     // space saving algorithm parameters
-	long long context_size = 1;
-	long long internal_counters = 20;
-	long long output_counters = 5;
-	Hasher* hasher = new Hasher(context_size);
-	SpaceSaving* space_saving = new SpaceSaving(internal_counters);
+	//long long context_size = 1;
+	//long long internal_counters = 20;
+	//long long output_counters = 5;
+	//Hasher* hasher = new Hasher(context_size);
+	//SpaceSaving* space_saving = new SpaceSaving(internal_counters);
     
 	std::string scratch;
     Slice record;
@@ -108,10 +112,11 @@ Status WalManager::genTopkForPartitioner(uint64_t log) {
 		const char *rec_data = record.data();
 		std::string key_str = std::string()+rec_data[14]+rec_data[15]+rec_data[16]+rec_data[17]+rec_data[18]+rec_data[19]+rec_data[20]+rec_data[21];
 		unsigned long long key_ull = std::stoll(key_str);
-		space_saving->Process(hasher->HashLong(key_ull));
+		space_saving_->Process(hasher_->HashLong(key_ull));
 	}
-	HashMap* map = new HashMap(output_counters, 0.75);
-	space_saving->ExtractTop(db_options_.info_log, output_counters, map);
+	//HashMap* map = new HashMap(output_counters, 0.75);
+	//space_saving->ExtractTop(db_options_.info_log, output_counters, map);
+	//space_saving_->ExtractTop(db_options_.info_log, output_counters_);
 	
     return status;
 }
