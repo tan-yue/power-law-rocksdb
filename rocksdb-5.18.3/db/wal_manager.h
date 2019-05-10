@@ -43,10 +43,10 @@ class WalManager {
         space_saving_(space_saving)
 		{
 		  context_size_ = 1;
-		  internal_counters_ = 1000;
-		  output_counters_ = 500;
+		  internal_counters_ = 20;
+		  output_counters_ = 10;
 		  hasher_ = new Hasher(context_size_);
-                  space_saving_ = new SpaceSaving(internal_counters_);
+		  space_saving_ = new SpaceSaving(internal_counters_);
 		}
 
   Status genTopkForPartitioner(uint64_t log);
