@@ -181,4 +181,73 @@ void SpaceSaving::Print(char** ngrams) {
   }
 }
 
+// custom space saving implementation
+void SpaceSaving::SetMin(){
+  for(int i=0; i<num_items_; i++){
+    if (freq_array_[i].second < freq_array_[min_key_index_].second){
+      min_key_index_ = i;
+      std::cout<<"New min key index = "<<min_key_index_<<" pair = "<<freq_array_[min_key_index_].first<<freq_array_[min_key_index_].second<<std::endl;
+      return;
+    }
+  }
+}
+
+void SpaceSaving::PrintFreqArray(std::shared_ptr<Logger> info_log){
+  for (int i=0; i<num_items_; i++){
+    //std::cout<<freq_array_[i].first<<" "<<freq_array_[i].second<<" ";
+    ROCKS_LOG_INFO(info_log, "ASH element=%d, frequency=%d", freq_array_[i].first, freq_array_[i].second);
+  }
+  //std::cout << std::endl;
+}
+
+void SpaceSaving::ProcessKey(unsigned long long key){
+
+  // check if key is in the array
+  for (int i=0; i<num_items_; i++){
+    if (freq_array_[i].first == key){
+      freq_array_[i].second++;
+      // if this key was min, then find the new min
+      if (key == freq_array_[min_key_index_].first){
+        SetMin();
+      }
+      return;
+    }
+  }
+
+  // if array hasn't filled up yet
+  if (num_items_ < m_){
+    freq_array_[num_items_] = std::make_pair(key,1);
+    // set this item as new min
+    min_key_index_ = num_items_; 
+    num_items_++;
+  }
+  else{
+    // array is full, evict the least frequent key and assign its freq to new key
+    unsigned long long new_freq = freq_array_[min_key_index_].second + 1;
+    freq_array_[min_key_index_] = std::make_pair(key, new_freq);
+    SetMin();
+  }
+}
+
+// Compares two intervals according to staring times. 
+bool ComparePair(std::pair<unsigned long long, unsigned long long> p1, std::pair<unsigned long long, unsigned long long> p2) 
+{
+  return (p1.second > p2.second); 
+}
+
+void SpaceSaving::ResetFreqArray(){
+  num_items_ = 0;
+}
+
+std::vector<std::pair<unsigned long long, unsigned long long>> SpaceSaving::ExtractTopK(const unsigned long long k) {
+  std::vector<std::pair<unsigned long long, unsigned long long>> topk_vector;
+  freq_array_[min_key_index_].second = 0;
+  std::sort(freq_array_, freq_array_+m_, ComparePair);
+  for(unsigned long long i=0; i<k; i++){
+    topk_vector.push_back({freq_array_[i].first, freq_array_[i].second});
+  }
+  ResetFreqArray();
+  return topk_vector;
+}
+
 }

@@ -254,7 +254,7 @@ class DB {
 
   virtual std::vector<std::pair<unsigned long long, unsigned long long>> ReportTopk(const unsigned long long k) {
       if (space_saving_) {
-          return space_saving_->ExtractTopVector(k);
+          return space_saving_->ExtractTopK(k);
       } else {
           std::cout << "space_saving_ is nullptr" << std::endl;
           return std::vector<std::pair<unsigned long long, unsigned long long> >();

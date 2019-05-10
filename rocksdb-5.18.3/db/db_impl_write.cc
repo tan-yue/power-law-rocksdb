@@ -871,8 +871,8 @@ Status DBImpl::WriteToWAL(const WriteThread::WriteGroup& write_group,
   }
 
   WriteBatchInternal::SetSequence(merged_batch, sequence);
-  std::string s = merged_batch->Data();
-  ROCKS_LOG_INFO(immutable_db_options_.info_log, "ASH writetowal key_slice_size=%d, count=%d, header1=%c%c%c%c%c%c%c%c, header2=%c%c%c%c%c%c%c%c, key=%c%c%c%c%c%c%c%c value[24]=%c, key[25]=%c, key[4118]=%c, key[4119]=%c, data_size=%d", merged_batch->GetDataSize(), merged_batch->Count(), s[0],s[1],s[2],s[3],s[4],s[5],s[6],s[7],s[8],s[9],s[10],s[11],s[12],s[13],s[14],s[15],s[16], s[17], s[18], s[19], s[20], s[21], s[22], s[23], s[24], s[25], s[4118], s[4119], merged_batch->Data().size());
+  //std::string s = merged_batch->Data();
+  //ROCKS_LOG_INFO(immutable_db_options_.info_log, "ASH writetowal key_slice_size=%d, count=%d, header1=%c%c%c%c%c%c%c%c, header2=%c%c%c%c%c%c%c%c, key=%c%c%c%c%c%c%c%c value[24]=%c, key[25]=%c, key[4118]=%c, key[4119]=%c, data_size=%d", merged_batch->GetDataSize(), merged_batch->Count(), s[0],s[1],s[2],s[3],s[4],s[5],s[6],s[7],s[8],s[9],s[10],s[11],s[12],s[13],s[14],s[15],s[16], s[17], s[18], s[19], s[20], s[21], s[22], s[23], s[24], s[25], s[4118], s[4119], merged_batch->Data().size());
 
   uint64_t log_size;
   status = WriteToWAL(*merged_batch, log_writer, log_used, &log_size);

@@ -1,7 +1,13 @@
 #ifndef SPACE_SAVING_H
 #define SPACE_SAVING_H
 
-#include "db/hash_map.h"
+#include <functional>
+#include <queue>
+#include <vector>
+#include <iostream>
+#include <utility>
+
+#include "rocksdb/hash_map.h"
 
 namespace rocksdb {
 
@@ -20,7 +26,7 @@ class Parent {
 class Child {
  public:
   Child();
-  void Detach(Parent** smallest, HashMap* map);
+  void Detach(Parent** smallest, HashMapSS* map);
   Parent* parent_;
   Child* next_;
   unsigned long long element_;
@@ -29,16 +35,26 @@ class Child {
 class SpaceSaving {
  public:
   SpaceSaving(const unsigned long long& num_counters);
-  SpaceSaving(HashMap* map);
+  SpaceSaving(HashMapSS* map);
   ~SpaceSaving();
   void Process(const unsigned long long& element);
   void Increment(Child* bucket);
-  void ExtractTop(std::shared_ptr<Logger> info_log, const unsigned long long output_counters, HashMap* map);
+  void ExtractTop(std::shared_ptr<Logger> info_log, const unsigned long long output_counters, HashMapSS* map);
   std::vector<std::pair<unsigned long long, unsigned long long> > ExtractTopVector(const unsigned long long output_counters);
   void Print(char** ngrams);
-  HashMap* map_;
+  HashMapSS* map_;
   Parent* smallest_;
   Parent* largest_;
+  // custom implementation of space saving
+  void SetMin();
+  void ProcessKey(unsigned long long key);
+  std::vector<std::pair<unsigned long long, unsigned long long> > ExtractTopK(const unsigned long long k);
+  void PrintFreqArray(std::shared_ptr<Logger> info_log);
+  void ResetFreqArray();
+  int num_items_ = 0;
+  static const int m_ = 31; // monitored keys
+  int min_key_index_ = -1;
+  std::pair<unsigned long long, unsigned long long> freq_array_[m_];
 };
 
 }

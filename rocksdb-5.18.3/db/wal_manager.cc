@@ -51,6 +51,12 @@ namespace rocksdb {
 static uint64_t total_records = 0;
 
 Status WalManager::genTopkForPartitioner(uint64_t log) {
+    //Status s;
+    // check to avoid the seg fault
+	//if (total_records > 4189380){
+	//  return s;
+	//}
+
 	ROCKS_LOG_INFO(db_options_.info_log, "Inside topk using db_options_.info_log");
     struct LogReporter : public log::Reader::Reporter {
         Env* env;
@@ -102,21 +108,24 @@ Status WalManager::genTopkForPartitioner(uint64_t log) {
 		std::string rec_str;
 		rec_str.assign(record.data(), record.size());
 		if (!rec_str.empty()){
-          ROCKS_LOG_INFO(db_options_.info_log, "ASH : Record size=%d, data=%c%c%c%c%c%c%c%c%c%c%c%c, total_records=%d", record.size(), rec_str[14], rec_str[15], rec_str[16], rec_str[17], rec_str[18], rec_str[19], rec_str[20], rec_str[21], rec_str[22], rec_str[23], rec_str[24], rec_str[25], total_records);
+          //ROCKS_LOG_INFO(db_options_.info_log, "ASH : Record size=%d, data=%c%c%c%c%c%c%c%c%c%c%c%c, total_records=%d", record.size(), rec_str[14], rec_str[15], rec_str[16], rec_str[17], rec_str[18], rec_str[19], rec_str[20], rec_str[21], rec_str[22], rec_str[23], rec_str[24], rec_str[25], total_records);
         
 		  // stream the key into the space saving algorithm
 		  const char *rec_data = record.data();
 		  std::string key_str = std::string()+rec_data[14]+rec_data[15]+rec_data[16]+rec_data[17]+rec_data[18]+rec_data[19]+rec_data[20]+rec_data[21];
 		  unsigned long long key_ull = std::stoll(key_str);
-		  space_saving_->Process(hasher_->HashLong(key_ull));
+		  //space_saving_->Process(hasher_->HashLong(key_ull));
+		  space_saving_->ProcessKey(key_ull);
 		}
 		else{
 		  ROCKS_LOG_INFO(db_options_.info_log, "ASH record string is null");
 		}
 	}
-	HashMapSS* map = new HashMapSS(output_counters_, 0.75);
-	space_saving_->ExtractTop(db_options_.info_log, output_counters_, map);
+	//HashMapSS* map = new HashMapSS(output_counters_, 0.75);
+	//space_saving_->ExtractTop(db_options_.info_log, output_counters_, map);
 	//space_saving_->ExtractTop(db_options_.info_log, output_counters_);
+	
+	//space_saving_->PrintFreqArray(db_options_.info_log);
 	
     return status;
 }

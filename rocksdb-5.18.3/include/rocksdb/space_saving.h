@@ -1,6 +1,12 @@
 #ifndef SPACE_SAVING_H
 #define SPACE_SAVING_H
 
+#include <functional>
+#include <queue>
+#include <vector>
+#include <iostream>
+#include <utility>
+
 #include "rocksdb/hash_map.h"
 
 namespace rocksdb {
@@ -39,6 +45,16 @@ class SpaceSaving {
   HashMapSS* map_;
   Parent* smallest_;
   Parent* largest_;
+  // custom implementation of space saving
+  void SetMin();
+  void ProcessKey(unsigned long long key);
+  std::vector<std::pair<unsigned long long, unsigned long long> > ExtractTopK(const unsigned long long k);
+  void PrintFreqArray(std::shared_ptr<Logger> info_log);
+  void ResetFreqArray();
+  int num_items_ = 0;
+  static const int m_ = 31; // monitored keys
+  int min_key_index_ = -1;
+  std::pair<unsigned long long, unsigned long long> freq_array_[m_];
 };
 
 }
