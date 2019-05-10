@@ -101,7 +101,7 @@ Status WalManager::genTopkForPartitioner(uint64_t log) {
 		total_records++;
 		std::string rec_str;
 		rec_str.assign(record.data(), record.size());
-        ROCKS_LOG_INFO(db_options_.info_log, "ASH : Record size=%d, data=%c%c%c%c%c%c%c%c%c%c%c%c, total_records=%d", record.size(), rec_str[14], rec_str[15], rec_str[16], rec_str[17], rec_str[18], rec_str[18], rec_str[19], rec_str[20], rec_str[21], rec_str[22], rec_str[23], rec_str[24], total_records);
+        ROCKS_LOG_INFO(db_options_.info_log, "ASH : Record size=%d, data=%c%c%c%c%c%c%c%c%c%c%c%c, total_records=%d", record.size(), rec_str[14], rec_str[15], rec_str[16], rec_str[17], rec_str[18], rec_str[19], rec_str[20], rec_str[21], rec_str[22], rec_str[23], rec_str[24], rec_str[25], total_records);
         
 		// stream the key into the space saving algorithm
 		const char *rec_data = record.data();
