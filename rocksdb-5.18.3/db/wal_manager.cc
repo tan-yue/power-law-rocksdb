@@ -109,8 +109,8 @@ Status WalManager::genTopkForPartitioner(uint64_t log) {
 		unsigned long long key_ull = std::stoll(key_str);
 		space_saving_->Process(hasher_->HashLong(key_ull));
 	}
-	HashMapSS* map = new HashMapSS(output_counters, 0.75);
-	space_saving->ExtractTop(db_options_.info_log, output_counters, map);
+	HashMapSS* map = new HashMapSS(output_counters_, 0.75);
+	space_saving_->ExtractTop(db_options_.info_log, output_counters_, map);
 	//space_saving_->ExtractTop(db_options_.info_log, output_counters_);
 	
     return status;
