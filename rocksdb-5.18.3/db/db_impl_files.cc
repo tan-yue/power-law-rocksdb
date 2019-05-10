@@ -492,6 +492,7 @@ void DBImpl::PurgeObsoleteFiles(JobContext& state, bool schedule_only) {
       InstrumentedMutexLock guard_lock(&mutex_);
       SchedulePendingPurge(fname, dir_to_sync, type, number, state.job_id);
     } else {
+	  InstrumentedMutexLock guard_lock(&mutex_);
       DeleteObsoleteFileImpl(state.job_id, fname, dir_to_sync, type, number);
     }
   }
