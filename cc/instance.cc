@@ -46,29 +46,31 @@ TopK report_topk(const unsigned long long k) {
 
 void report_dbstats() {
     std::string out;
-    db->GetProperty("rocksdb.num-immutable-mem-table", &out);
-    std::cout << "# immutable memtables not yet flushed: " << out << std::endl;
-    //db->GetProperty("rocksdb.num-immutable-mem-table-flushed", &out);
-    //std::cout << "# immutable memtables already flushed: " << out << std::endl;
-    db->GetProperty("rocksdb.mem-table-flush-pending", &out);
-    if (out == "0") {
-        std::cout << "No pending memtable flushing" << std::endl;
-    } else {
-        db->GetProperty("rocksdb.num-running-flushes", &out);
-        std::cout << "There are " + out + " pending memtable flushings" << std::endl;
-    }
+    //db->GetProperty("rocksdb.num-immutable-mem-table", &out);
+    //std::cout << "# immutable memtables not yet flushed: " << out << std::endl;
+    ////db->GetProperty("rocksdb.num-immutable-mem-table-flushed", &out);
+    ////std::cout << "# immutable memtables already flushed: " << out << std::endl;
+    //db->GetProperty("rocksdb.mem-table-flush-pending", &out);
+    //if (out == "0") {
+    //    std::cout << "No pending memtable flushing" << std::endl;
+    //} else {
+    //    db->GetProperty("rocksdb.num-running-flushes", &out);
+    //    std::cout << "There are " + out + " pending memtable flushings" << std::endl;
+    //}
 
-    db->GetProperty("rocksdb.compaction-pending", &out);
-    if (out == "0") {
-        std::cout << "No pending compaction" << std::endl;
-    } else {
-        db->GetProperty("rocksdb.num-running-compactions", &out);
-        std::cout << "There are " + out + " running compactions" << std::endl;
-    }
-    // Levels
-    db->GetProperty("rocksdb.levelstats", &out);
+    //db->GetProperty("rocksdb.compaction-pending", &out);
+    //if (out == "0") {
+    //    std::cout << "No pending compaction" << std::endl;
+    //} else {
+    //    db->GetProperty("rocksdb.num-running-compactions", &out);
+    //    std::cout << "There are " + out + " running compactions" << std::endl;
+    //}
+    //// Levels
+    //db->GetProperty("rocksdb.levelstats", &out);
+    //std::cout << out << std::endl;
+    //// Detailed statistics (see include/statistics.h)
+    db->GetProperty("rocksdb.stats", &out);
     std::cout << out << std::endl;
-    // Detailed statistics (see include/statistics.h)
     db->GetProperty("rocksdb.options-statistics", &out);
     std::cout << out << std::endl;
 }
@@ -81,7 +83,9 @@ int main(int argc, char* argv[]){
     DestroyDB(db_name, options);
     options.create_if_missing = true;
     options.error_if_exists = true;
-    options.write_buffer_size = 64 << 20;
+    options.write_buffer_size = 16 * 1048576;
+    options.max_bytes_for_level_base = options.write_buffer_size * 4;
+    options.wal_dir = "/disk/scratch1/ty/wal" + string(argv[1]);
     options.statistics = CreateDBStatistics();
     Status status = DB::Open(options, db_name, &db);
     assert(status.ok());

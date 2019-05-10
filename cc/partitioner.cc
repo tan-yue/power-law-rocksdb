@@ -1,5 +1,7 @@
 #include <chrono>
 #include <iostream>
+#include <fstream>
+#include <tuple>
 #include <string>
 #include <vector>
 #include <cassert>
@@ -15,6 +17,7 @@ class Partitioner {
     vector<rpc::client *> clients;
     rpc::client * coord_client;
     int k;
+    ofstream outfile;
 public:
     Partitioner(int num) : k(500) {
         string localhost = "127.0.0.1";
@@ -22,6 +25,7 @@ public:
             clients.push_back(new rpc::client(localhost, (uint16_t)(9080 + i)));
         }
         coord_client = new rpc::client(localhost, (uint16_t)7080);
+        outfile.open("topk.txt");
     }
 
     ~Partitioner() {
@@ -32,7 +36,7 @@ public:
 #ifdef DEBUG
         int seconds_to_sleep = 6;
 #else
-        int seconds_to_sleep = 600;
+        int seconds_to_sleep = 60;
 #endif
         while (true) {
 #ifdef DEBUG
@@ -65,8 +69,10 @@ void Partitioner::repartition(vector<future<handle> > & futures) {
     }
 
     // merge sort
-    vector<pair<uint64_t, int> > merged;
+    vector<tuple<uint64_t, uint64_t, int> > merged;
     vector<size_t> curs;
+    
+    outfile << "key_id\tfrequency\tinstance#\n";
     while(merged.size() < k * clients.size()) {
         size_t max_i = 0;
         unsigned long long max_cnt = 0;
@@ -74,7 +80,9 @@ void Partitioner::repartition(vector<future<handle> > & futures) {
             if (curs[i] < k && futures[i].get().as<TopK>().data[curs[i]].second > max_cnt)
                 max_i = i;
         }
-        merged.push_back({(uint64_t)futures[max_i].get().as<TopK>().data[curs[max_i]].first, (int)max_i});
+        auto && data_ref = futures[max_i].get().as<TopK>().data;
+        merged.emplace_back((uint64_t)data_ref[curs[max_i]].first, (uint64_t)data_ref[curs[max_i]].second, (int)max_i);
+        outfile << data_ref[curs[max_i]].first << "," << data_ref[curs[max_i]].second << "," << max_i << "\n";
         ++curs[max_i];
     }
 

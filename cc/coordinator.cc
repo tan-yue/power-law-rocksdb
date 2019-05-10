@@ -37,6 +37,12 @@ public:
             (*it)->call("stop_db_srv");
         }
     }
+
+    void report_stats() {
+        for (auto it = clients.begin(); it != clients.end(); ++it) {
+            (*it)->call("report_dbstats");
+        }
+    } 
 };
 
 int Coordinator::lookup (uint64_t key) {
@@ -63,6 +69,7 @@ int main(int argc, char * argv[]) {
 #endif
                 coord.put((uint64_t)stol(key));
             }
+            coord.report_stats();
     });
 
     rpc::server srv((uint16_t)7080);
