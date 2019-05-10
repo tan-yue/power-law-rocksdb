@@ -42,7 +42,9 @@ void put(uint64_t key) {
 
 TopK report_topk(const unsigned long long k) {
     cout << "Receive ReportTopk RPC call" << endl;
-    return {db->ReportTopk(k)};
+    TopK res{db->ReportTopk(k)};
+    cout << "db->ReportTopk succeeded" << endl;
+    return res;
 }
 
 void report_dbstats() {
