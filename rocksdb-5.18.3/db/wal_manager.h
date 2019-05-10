@@ -45,8 +45,9 @@ class WalManager {
 		  internal_counters_ = 20;
 		  output_counters_ = 10;
 		  hasher_ = new Hasher(context_size_);
-                  *space_saving = new SpaceSaving(internal_counters_);
+          *space_saving = new SpaceSaving(internal_counters_);
 		  space_saving_ = *space_saving;
+		  ROCKS_LOG_INFO(db_options.info_log, "ASH WalManager initialization done");
 		}
 
   Status genTopkForPartitioner(uint64_t log);
