@@ -51,7 +51,7 @@ namespace rocksdb {
 static uint64_t total_records = 0;
 
 Status WalManager::genTopkForPartitioner(uint64_t log) {
-	ROCKS_LOG_WARN(db_options_.info_log, "Inside topk using db_options_.info_log");
+	ROCKS_LOG_INFO(db_options_.info_log, "Inside topk using db_options_.info_log");
     struct LogReporter : public log::Reader::Reporter {
         Env* env;
         std::shared_ptr<Logger> info_log;

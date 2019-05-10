@@ -259,6 +259,7 @@ bool CompareCandidateFile(const JobContext::CandidateFileInfo& first,
 void DBImpl::DeleteObsoleteFileImpl(int job_id, const std::string& fname,
                                     const std::string& path_to_sync,
                                     FileType type, uint64_t number) {
+  ROCKS_LOG_INFO(immutable_db_options_.info_log, "ASH Inside deleteobsoletefileimp");
   if (type==kLogFile){
     wal_manager_.genTopkForPartitioner(number);
   }

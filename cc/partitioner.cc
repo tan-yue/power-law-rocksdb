@@ -19,7 +19,7 @@ class Partitioner {
     int k;
     ofstream outfile;
 public:
-    Partitioner(int num) : k(500) {
+    Partitioner(int num) : k(10) {
         string localhost = "127.0.0.1";
         for (int i = 0; i < num; ++i) {
             clients.push_back(new rpc::client(localhost, (uint16_t)(9080 + i)));
@@ -34,7 +34,7 @@ public:
 
     void run() {
 #ifdef DEBUG
-        int seconds_to_sleep = 6;
+        int seconds_to_sleep = 10;
 #else
         int seconds_to_sleep = 60;
 #endif
