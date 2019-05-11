@@ -70,6 +70,7 @@ int main(int argc, char * argv[]) {
                 coord.put((uint64_t)stol(key));
             }
             coord.report_stats();
+            exit(1);
     });
 
     rpc::server srv((uint16_t)7080);
