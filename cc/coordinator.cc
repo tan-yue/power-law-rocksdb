@@ -3,6 +3,7 @@
 #include <vector>
 #include <thread>
 #include <mutex>
+#include <unistd.h>
 
 #include "rpc/client.h"
 #include "rpc/server.h"
@@ -41,8 +42,9 @@ public:
     
     void stop() {
         for (auto it = clients.begin(); it != clients.end(); ++it) {
-            (*it)->call("stop_db_srv");
+            (*it)->async_call("stop_db_srv");
         }
+        sleep(5);
         cout << "Coordinator stopped." << endl;
     }
 
