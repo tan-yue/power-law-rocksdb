@@ -13,6 +13,6 @@ struct TopK {
 };
 
 struct ExceptionList {
-    int placeholder;
-    MSGPACK_DEFINE_ARRAY(placeholder);
+    unordered_map<uint64_t, int> key_to_instance;
+    MSGPACK_DEFINE_ARRAY(key_to_instance);
 };

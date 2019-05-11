@@ -186,7 +186,7 @@ void SpaceSaving::SetMin(){
   for(int i=0; i<num_items_; i++){
     if (freq_array_[i].second < freq_array_[min_key_index_].second){
       min_key_index_ = i;
-      std::cout<<"New min key index = "<<min_key_index_<<" pair = "<<freq_array_[min_key_index_].first<<freq_array_[min_key_index_].second<<std::endl;
+      //std::cout<<"New min key index = "<<min_key_index_<<" pair = "<<freq_array_[min_key_index_].first<<freq_array_[min_key_index_].second<<std::endl;
       return;
     }
   }

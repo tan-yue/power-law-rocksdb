@@ -6,26 +6,27 @@
 #include <vector>
 #include <cassert>
 #include <unistd.h>
+#include <ctime>
 
 #include "rpc/client.h"
 #include "topk.h"
 
 using namespace std;
 typedef RPCLIB_MSGPACK::object_handle handle;
+typedef vector<pair<unsigned long long, unsigned long long>> TopkData;
 
 class Partitioner {
     vector<rpc::client *> clients;
     rpc::client * coord_client;
     int k;
-    ofstream outfile;
+    int cutoff;
 public:
-    Partitioner(int num) : k(10) {
+    Partitioner(int num, int percent) : k(10), cutoff(num * k * percent / 100) {
         string localhost = "127.0.0.1";
         for (int i = 0; i < num; ++i) {
             clients.push_back(new rpc::client(localhost, (uint16_t)(9080 + i)));
         }
         coord_client = new rpc::client(localhost, (uint16_t)7080);
-        outfile.open("topk.txt");
     }
 
     ~Partitioner() {
@@ -47,9 +48,19 @@ public:
             vector<future<handle> > futures;
             futures.reserve(clients.size());
             for (auto it = clients.begin(); it != clients.end(); ++it) {
-                futures.push_back((*it)->async_call("report_topk", k));
+                futures.push_back(std::move((*it)->async_call("report_topk", k)));
             }
             repartition(futures);
+            // sync call
+            //vector<TopkData> topks;
+            //for (size_t i = 0; i < clients.size(); ++i) {
+            //    cout << "client " << i << endl;
+            //    TopkData topk = clients[i]->call("report_topk", k).as<TopK>().data;
+            //    assert(typeid(topk) == typeid(TopkData));
+            //    topks.push_back(topk);
+            //    //topks.back().size();
+            //}
+            //repartition(topks);
             seconds_to_sleep -=
                 chrono::duration_cast<chrono::seconds>(chrono::steady_clock::now() - start)
                 .count();
@@ -58,45 +69,80 @@ public:
 
 private:
     void repartition(vector<future<handle> > & futures);
+    void repartition(const vector<TopkData> & topks);
 };
 
 void Partitioner::repartition(vector<future<handle> > & futures) {
+    vector<TopkData> topks;
     for (auto it = futures.begin(); it != futures.end(); ++it) {
-#ifdef DEBUG
-        cout << "waiting..." << endl;
-#endif
-        it->wait();
+        topks.push_back(std::move(it->get().as<TopK>().data));
     }
-
     // merge sort
     vector<tuple<uint64_t, uint64_t, int> > merged;
-    vector<size_t> curs;
+    vector<size_t> curs(clients.size(), 0);
+    ExceptionList exceptions;
     
-    outfile << "key_id\tfrequency\tinstance#\n";
+    cout << "key_id\tfrequency\tinstance#" << endl;
     while(merged.size() < k * clients.size()) {
         size_t max_i = 0;
         unsigned long long max_cnt = 0;
         for (size_t i = 0; i < clients.size(); ++i) {
-            if (curs[i] < k && futures[i].get().as<TopK>().data[curs[i]].second > max_cnt)
+            if (curs[i] < k && topks[i][curs[i]].second > max_cnt){
                 max_i = i;
+            }
         }
-        auto && data_ref = futures[max_i].get().as<TopK>().data;
-        merged.emplace_back((uint64_t)data_ref[curs[max_i]].first, (uint64_t)data_ref[curs[max_i]].second, (int)max_i);
-        outfile << data_ref[curs[max_i]].first << "," << data_ref[curs[max_i]].second << "," << max_i << "\n";
+        uint64_t key = (uint64_t)topks[max_i][curs[max_i]].first;
+        uint64_t freq = (uint64_t)topks[max_i][curs[max_i]].second;
+        if (merged.size() < cutoff || clients.size() == 1) {
+            // give it to the first instance, assuming three instances
+            exceptions.key_to_instance.emplace(key, 0);
+        } else {
+            // give it to the second instance
+            exceptions.key_to_instance.emplace(key, 1);
+        }
+        merged.emplace_back(key, freq, (int)max_i);
+        cout << topks[max_i][curs[max_i]].first << "," << topks[max_i][curs[max_i]].second << "," << max_i << endl;
         ++curs[max_i];
     }
 
     // TODO:make repartition decisions
-    ExceptionList exceptions{0};
+
+    // let's do not wait for response
+    coord_client->async_call("handle_repartition", exceptions);
+}
+
+void Partitioner::repartition(const vector<TopkData> & topks) {
+    // merge sort
+    vector<tuple<uint64_t, uint64_t, int> > merged;
+    vector<size_t> curs(clients.size(), 0);
+    
+    while(merged.size() < k * clients.size()) {
+        size_t max_i = 0;
+        unsigned long long max_cnt = 0;
+        cout << "round " << merged.size() << endl;
+        for (size_t i = 0; i < clients.size(); ++i) {
+            if (curs[i] < k && topks[i][curs[i]].second > max_cnt){
+                max_i = i;
+            }
+        }
+        uint64_t key = (uint64_t)topks[max_i][curs[max_i]].first;
+        uint64_t freq = (uint64_t)topks[max_i][curs[max_i]].second;
+        cout << key << "," << freq << "," << max_i << endl;
+        merged.emplace_back(key, freq, (int)max_i);
+        ++curs[max_i];
+    }
+
+    // TODO:make repartition decisions
+    ExceptionList exceptions;
 
     // let's do not wait for response
     coord_client->async_call("handle_repartition", exceptions);
 }
 
 int main(int argc, char * argv[]) {
-    assert(argc == 2);
+    assert(argc == 3);
 
-    Partitioner p(stoi(argv[1]));
+    Partitioner p(stoi(argv[1]), stoi(argv[2]));
 
     // this is a blocking call
     p.run();
