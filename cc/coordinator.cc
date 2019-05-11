@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <thread>
+#include <mutex>
 
 #include "rpc/client.h"
 #include "rpc/server.h"
@@ -9,10 +10,16 @@
 
 using namespace std;
 
+class Coordinator;
+Coordinator * coord_ptr = nullptr;
+std::mutex except_lock;
+
 class Coordinator {
     vector<rpc::client *> clients;
     uint64_t max_key;
 public:
+    unordered_map<uint64_t, int> exceptions;
+
     Coordinator (int num, int max_key_) : max_key(max_key_) {
         string localhost = "127.0.0.1";
         for (int i = 0; i < num; ++i) {
@@ -36,6 +43,7 @@ public:
         for (auto it = clients.begin(); it != clients.end(); ++it) {
             (*it)->call("stop_db_srv");
         }
+        cout << "Coordinator stopped." << endl;
     }
 
     void report_stats() {
@@ -46,19 +54,26 @@ public:
 };
 
 int Coordinator::lookup (uint64_t key) {
-    return (int)(key % (uint64_t)clients.size());
+    std::lock_guard<std::mutex> guard(except_lock);
+    auto it = exceptions.find(key);
+    if (it != exceptions.end()) {
+        return it->second;
+    } else {
+        return (int)(key % (uint64_t)clients.size());
+    }
 }
 
 void handle_repartition(ExceptionList exceptions) {
-    //TODO
-    //test only
+    std::lock_guard<std::mutex> guard(except_lock);
     cout << "Hello from handle_repartition" << endl;
+    coord_ptr->exceptions = exceptions.key_to_instance;
 }
 
 int main(int argc, char * argv[]) {
     assert(argc == 2);
 
     Coordinator coord(stoi(argv[1]), 4<<20); // key space is 4 million
+    coord_ptr = &coord;
     cout << "Coordinator started." << endl;
 
     thread puts([&coord]() {
@@ -70,15 +85,13 @@ int main(int argc, char * argv[]) {
                 coord.put((uint64_t)stol(key));
             }
             coord.report_stats();
-            exit(1);
+            coord.stop();
+            exit(0);
     });
 
     rpc::server srv((uint16_t)7080);
     srv.bind("handle_repartition", handle_repartition);
     srv.run();
-
-    coord.stop();
-    cout << "Coordinator stopped." << endl;
 
     return 0;
 }

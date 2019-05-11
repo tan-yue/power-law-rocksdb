@@ -19,8 +19,9 @@ class Partitioner {
     vector<rpc::client *> clients;
     rpc::client * coord_client;
     int k;
+    int cutoff;
 public:
-    Partitioner(int num) : k(10) {
+    Partitioner(int num, int percent) : k(10), cutoff(num * k * percent / 100) {
         string localhost = "127.0.0.1";
         for (int i = 0; i < num; ++i) {
             clients.push_back(new rpc::client(localhost, (uint16_t)(9080 + i)));
@@ -79,6 +80,7 @@ void Partitioner::repartition(vector<future<handle> > & futures) {
     // merge sort
     vector<tuple<uint64_t, uint64_t, int> > merged;
     vector<size_t> curs(clients.size(), 0);
+    ExceptionList exceptions;
     
     cout << "key_id\tfrequency\tinstance#" << endl;
     while(merged.size() < k * clients.size()) {
@@ -89,13 +91,21 @@ void Partitioner::repartition(vector<future<handle> > & futures) {
                 max_i = i;
             }
         }
-        merged.emplace_back((uint64_t)topks[max_i][curs[max_i]].first, (uint64_t)topks[max_i][curs[max_i]].second, (int)max_i);
+        uint64_t key = (uint64_t)topks[max_i][curs[max_i]].first;
+        uint64_t freq = (uint64_t)topks[max_i][curs[max_i]].second;
+        if (merged.size() < cutoff || clients.size() == 1) {
+            // give it to the first instance, assuming three instances
+            exceptions.key_to_instance.emplace(key, 0);
+        } else {
+            // give it to the second instance
+            exceptions.key_to_instance.emplace(key, 1);
+        }
+        merged.emplace_back(key, freq, (int)max_i);
         cout << topks[max_i][curs[max_i]].first << "," << topks[max_i][curs[max_i]].second << "," << max_i << endl;
         ++curs[max_i];
     }
 
     // TODO:make repartition decisions
-    ExceptionList exceptions{0};
 
     // let's do not wait for response
     coord_client->async_call("handle_repartition", exceptions);
@@ -123,16 +133,16 @@ void Partitioner::repartition(const vector<TopkData> & topks) {
     }
 
     // TODO:make repartition decisions
-    ExceptionList exceptions{0};
+    ExceptionList exceptions;
 
     // let's do not wait for response
     coord_client->async_call("handle_repartition", exceptions);
 }
 
 int main(int argc, char * argv[]) {
-    assert(argc == 2);
+    assert(argc == 3);
 
-    Partitioner p(stoi(argv[1]));
+    Partitioner p(stoi(argv[1]), stoi(argv[2]));
 
     // this is a blocking call
     p.run();

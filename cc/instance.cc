@@ -109,6 +109,7 @@ int main(int argc, char* argv[]){
                 rpc::this_server().stop();
                 delete db;
                 cout << "db_srv: Instance " << to_string(index) << " stopped." << endl;
+                exit(0);
             }
         );
         db_srv.run();
