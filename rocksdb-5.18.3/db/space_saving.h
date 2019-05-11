@@ -52,7 +52,7 @@ class SpaceSaving {
   void PrintFreqArray(std::shared_ptr<Logger> info_log);
   void ResetFreqArray();
   int num_items_ = 0;
-  static const int m_ = 31; // monitored keys
+  static const int m_ = 2000; // monitored keys
   int min_key_index_ = -1;
   std::pair<unsigned long long, unsigned long long> freq_array_[m_];
 };
