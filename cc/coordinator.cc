@@ -38,6 +38,13 @@ public:
         clients[this->lookup(key)]->call("put", key);
     }
 
+    void del (int inst, uint64_t key) {
+#ifdef DEBUG
+        cout << "Calling Delete to key " << key << " on instance " << inst << endl;
+#endif
+        clients[inst]->call("delete", key);
+    }
+
     int lookup (uint64_t key);
     
     void stop() {
@@ -69,6 +76,10 @@ void handle_repartition(ExceptionList exceptions) {
     std::lock_guard<std::mutex> guard(except_lock);
     cout << "Hello from handle_repartition" << endl;
     coord_ptr->exceptions = exceptions.key_to_instance;
+    for(auto &item: coord_ptr->exceptions) {
+        int origin = (int)(item.first % 3);
+        coord_ptr->del(origin, item.first);
+    }
 }
 
 int main(int argc, char * argv[]) {

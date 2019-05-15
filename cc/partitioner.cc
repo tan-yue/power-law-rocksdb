@@ -21,7 +21,7 @@ class Partitioner {
     int k;
     int cutoff;
 public:
-    Partitioner(int num, int percent) : k(10), cutoff(num * k * percent / 100) {
+    Partitioner(int num, int k_, int percent) : k(k_), cutoff(num * k * percent / 100) {
         string localhost = "127.0.0.1";
         for (int i = 0; i < num; ++i) {
             clients.push_back(new rpc::client(localhost, (uint16_t)(9080 + i)));
@@ -37,9 +37,9 @@ public:
 #ifdef DEBUG
         int seconds_to_sleep = 10;
 #else
-        int seconds_to_sleep = 60;
+        int seconds_to_sleep = 120;
 #endif
-        while (true) {
+        //while (true) {
 #ifdef DEBUG
             cout << "Hello from run()" << endl;
 #endif
@@ -48,7 +48,7 @@ public:
             vector<future<handle> > futures;
             futures.reserve(clients.size());
             for (auto it = clients.begin(); it != clients.end(); ++it) {
-                futures.push_back(std::move((*it)->async_call("report_topk", k)));
+                futures.push_back(std::move((*it)->async_call("report_topk", 3 * k)));
             }
             repartition(futures);
             // sync call
@@ -64,7 +64,7 @@ public:
             seconds_to_sleep -=
                 chrono::duration_cast<chrono::seconds>(chrono::steady_clock::now() - start)
                 .count();
-        }
+        //}
     }
 
 private:
@@ -83,23 +83,44 @@ void Partitioner::repartition(vector<future<handle> > & futures) {
     ExceptionList exceptions;
     
     cout << "key_id\tfrequency\tinstance#" << endl;
-    while(merged.size() < k * clients.size()) {
+    int num = clients.size();
+    while(merged.size() < k * num) {
         size_t max_i = 0;
         unsigned long long max_cnt = 0;
         for (size_t i = 0; i < clients.size(); ++i) {
             if (curs[i] < k && topks[i][curs[i]].second > max_cnt){
                 max_i = i;
+                max_cnt = topks[i][curs[i]].second;
             }
         }
         uint64_t key = (uint64_t)topks[max_i][curs[max_i]].first;
         uint64_t freq = (uint64_t)topks[max_i][curs[max_i]].second;
-        if (merged.size() < cutoff || clients.size() == 1) {
-            // give it to the first instance, assuming three instances
+        // reassign all reported keys to instance 1
+        //if ((int)(key % num) != 0)
+        //    exceptions.key_to_instance.emplace(key, 0);
+        //int inst;
+        //for (inst = 1; inst <= num; ++inst) {
+        //    if (merged.size() < inst * k)
+        //       break;
+        //}
+        //if ((int)(key % num) != inst-1)
+        //    exceptions.key_to_instance.emplace(key, inst-1);
+        //if (merged.size() < cutoff || clients.size() == 1) {
+        //    // give it to the first instance, assuming three instances
+        //    exceptions.key_to_instance.emplace(key, 0);
+        //} else if (merged.size() < cutoff + k) {
+        //    // give it to the second instance
+        //    exceptions.key_to_instance.emplace(key, 1);
+        //} else if (merged.size() < cutoff + k + k) {
+        //    // give it to the third instance
+        //    exceptions.key_to_instance.emplace(key, 2);
+        //}
+        if (merged.size() < 3000)
             exceptions.key_to_instance.emplace(key, 0);
-        } else {
-            // give it to the second instance
+        else if (merged.size() < 4000)
             exceptions.key_to_instance.emplace(key, 1);
-        }
+        else if (merged.size() < 5000)
+            exceptions.key_to_instance.emplace(key, 2);
         merged.emplace_back(key, freq, (int)max_i);
         cout << topks[max_i][curs[max_i]].first << "," << topks[max_i][curs[max_i]].second << "," << max_i << endl;
         ++curs[max_i];
@@ -140,9 +161,9 @@ void Partitioner::repartition(const vector<TopkData> & topks) {
 }
 
 int main(int argc, char * argv[]) {
-    assert(argc == 3);
+    assert(argc == 4);
 
-    Partitioner p(stoi(argv[1]), stoi(argv[2]));
+    Partitioner p(stoi(argv[1]), stoi(argv[2]), stoi(argv[3]));
 
     // this is a blocking call
     p.run();

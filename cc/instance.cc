@@ -31,13 +31,23 @@ inline Slice* BigSlice(size_t size) {
 
 void put(uint64_t key) {
 #ifdef DEBUG
-    cout << "Receive a Put to key " << to_string((long)key) << endl;
+    cout << "Receive a Put to key " << key << endl;
 #endif
     ostringstream ss;
     ss << setw(8) << setfill('0') << key;
     WriteOptions wo;
     //ignore the returned status
     db->Put(wo, ss.str(), *BigSlice(value_size));
+}
+
+void del(uint64_t key) {
+#ifdef DEBUG
+    cout << "Receive a Del to key " << key << endl;
+#endif
+    ostringstream ss;
+    ss << setw(8) << setfill('0') << key;
+    WriteOptions wo;
+    db->Delete(wo, ss.str());
 }
 
 TopK report_topk(const unsigned long long k) {
@@ -101,6 +111,7 @@ int main(int argc, char* argv[]){
         cout << "Starting db_srv" << endl;
         rpc::server db_srv((uint16_t)(8080 + index));
         db_srv.bind("put", put);
+        db_srv.bind("delete", del);
         db_srv.bind("report_dbstats", report_dbstats);
         //db_srv.bind("report_topk", report_topk);
         db_srv.bind(
